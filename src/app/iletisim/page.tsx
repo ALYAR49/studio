@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -19,6 +18,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Send } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import { useState } from 'react';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'İsim en az 2 karakter olmalıdır.' }),
@@ -28,6 +29,7 @@ const formSchema = z.object({
 
 export default function IletisimPage() {
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -38,13 +40,30 @@ export default function IletisimPage() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    toast({
-      title: 'Mesajınız Gönderildi!',
-      description: 'En kısa sürede size geri dönüş yapacağım.',
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsSubmitting(true);
+    
+    const { error } = await supabase.from('messages').insert({
+        name: values.name,
+        email: values.email,
+        message: values.message,
     });
-    form.reset();
+
+    if (error) {
+      console.error('Error sending message:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Hata!',
+        description: 'Mesajınız gönderilirken bir sorun oluştu. Lütfen tekrar deneyin.',
+      });
+    } else {
+      toast({
+        title: 'Mesajınız Gönderildi!',
+        description: 'En kısa sürede size geri dönüş yapacağım.',
+      });
+      form.reset();
+    }
+    setIsSubmitting(false);
   }
 
   return (
@@ -99,8 +118,8 @@ export default function IletisimPage() {
                     </FormItem>
                 )}
                 />
-                <Button type="submit" className="w-full">
-                 <Send className="mr-2" /> Gönder
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                 <Send className="mr-2" /> {isSubmitting ? 'Gönderiliyor...' : 'Gönder'}
                 </Button>
             </form>
             </Form>
