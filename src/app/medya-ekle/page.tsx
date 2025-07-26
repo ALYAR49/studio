@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { UploadCloud } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type MediaItem = {
   type: 'image' | 'video';
@@ -17,9 +19,23 @@ type MediaItem = {
 };
 
 export default function MedyaEklePage() {
+  const router = useRouter();
   const { toast } = useToast();
   const [form, setForm] = useState<MediaItem>({ type: 'image', url: '', title: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      if (error || !data.session) {
+        router.push('/giris');
+      } else {
+        setIsAuthenticated(true);
+      }
+    };
+    checkSession();
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,9 +67,43 @@ export default function MedyaEklePage() {
         description: "Medya galeriye başarıyla eklendi.",
       });
       setForm({ type: 'image', url: '', title: '' });
+       // Optional: refresh gallery page data or redirect
+       router.push('/galeri');
     }
     setIsSubmitting(false);
   };
+
+  if (!isAuthenticated) {
+     return (
+        <div className="max-w-2xl mx-auto space-y-4">
+            <Skeleton className="h-10 w-1/2" />
+            <Skeleton className="h-6 w-3/4" />
+            <Card>
+                <CardHeader>
+                    <Skeleton className="h-8 w-1/3" />
+                    <Skeleton className="h-4 w-2/3 mt-2" />
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <div className="space-y-2">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-10 w-full" />
+                    </div>
+                     <div className="space-y-2">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-10 w-full" />
+                    </div>
+                     <div className="space-y-2">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-10 w-full" />
+                    </div>
+                </CardContent>
+                <CardFooter>
+                    <Skeleton className="h-10 w-full" />
+                </CardFooter>
+            </Card>
+        </div>
+     );
+  }
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -76,6 +126,7 @@ export default function MedyaEklePage() {
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
                 required
+                disabled={isSubmitting}
               />
             </div>
             <div className="space-y-2">
@@ -87,6 +138,7 @@ export default function MedyaEklePage() {
                 value={form.url}
                 onChange={(e) => setForm({ ...form, url: e.target.value })}
                 required
+                disabled={isSubmitting}
               />
             </div>
             <div className="space-y-2">
@@ -94,6 +146,7 @@ export default function MedyaEklePage() {
               <Select
                 value={form.type}
                 onValueChange={(value: 'image' | 'video') => setForm({ ...form, type: value })}
+                disabled={isSubmitting}
               >
                 <SelectTrigger id="type">
                   <SelectValue placeholder="Medya türünü seçin" />
