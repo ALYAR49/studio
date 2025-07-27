@@ -29,10 +29,12 @@ export default function HomePage() {
         .order('created_at', { ascending: false })
         .limit(4);
 
-      if (error) {
+      // RLS policies can cause an error that doesn't get explicitly thrown,
+      // but results in an empty data array. We handle this case here.
+      if (error || !data) {
         console.error("Error fetching latest posts:", error);
         setFetchError("Yazılar yüklenemedi. Veritabanı okuma izinlerinizi (RLS) kontrol edin.");
-      } else if (data) {
+      } else {
         setLatestPosts(data);
       }
       setLoading(false);
