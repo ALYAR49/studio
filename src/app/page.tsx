@@ -29,11 +29,11 @@ export default function HomePage() {
         .order('created_at', { ascending: false })
         .limit(4);
 
-      // RLS policies can cause an error that doesn't get explicitly thrown,
-      // but results in an empty data array. We handle this case here.
+      // RLS (Row-Level Security) politikaları, bir hata fırlatmadan boş bir
+      // veri dizisi döndürebilir. Bu durumu burada ele alıyoruz.
       if (error || !data) {
         console.error("Error fetching latest posts:", error);
-        setFetchError("Yazılar yüklenemedi. Veritabanı okuma izinlerinizi (RLS) kontrol edin.");
+        setFetchError("Yazılar yüklenemedi. Lütfen Supabase projenizdeki 'posts' tablosu için genel okuma (SELECT) RLS politikasını kontrol edin.");
       } else {
         setLatestPosts(data);
       }
@@ -60,7 +60,10 @@ export default function HomePage() {
                 <Skeleton className="h-8 w-full" />
               </div>
             ) : fetchError ? (
-              <p className="text-destructive">{fetchError}</p>
+              <div className="text-destructive bg-destructive/10 p-4 rounded-md">
+                <h4 className="font-semibold">Veri Çekme Hatası</h4>
+                <p>{fetchError}</p>
+              </div>
             ) : (
               <List>
                 {latestPosts.length > 0 ? (
