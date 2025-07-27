@@ -17,10 +17,12 @@ type Post = {
 export default function HomePage() {
   const [latestPosts, setLatestPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchLatestPosts = async () => {
       setLoading(true);
+      setFetchError(null);
       const { data, error } = await supabase
         .from('posts')
         .select('id, title')
@@ -29,6 +31,7 @@ export default function HomePage() {
 
       if (error) {
         console.error("Error fetching latest posts:", error);
+        setFetchError("Yazılar yüklenemedi. Veritabanı okuma izinlerinizi (RLS) kontrol edin.");
       } else if (data) {
         setLatestPosts(data);
       }
@@ -54,6 +57,8 @@ export default function HomePage() {
                 <Skeleton className="h-8 w-full" />
                 <Skeleton className="h-8 w-full" />
               </div>
+            ) : fetchError ? (
+              <p className="text-destructive">{fetchError}</p>
             ) : (
               <List>
                 {latestPosts.length > 0 ? (
