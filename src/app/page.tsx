@@ -29,12 +29,13 @@ export default function HomePage() {
         .order('created_at', { ascending: false })
         .limit(4);
 
-      if (error && error.message) {
+      if (error) {
+         // `error` nesnesi doluysa, bu bir ağ hatası veya başka bir sorun olabilir.
          console.error("Error fetching latest posts:", error);
-         setFetchError("Yazılar yüklenirken bir hata oluştu.");
+         setFetchError("Yazılar yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.");
       } else if (!data || data.length === 0) {
-        // RLS (Row-Level Security) politikaları, bir hata fırlatmadan boş bir
-        // veri dizisi döndürebilir. Bu durumu burada ele alıyoruz.
+        // RLS (Row-Level Security) politikaları genellikle bir hata fırlatmadan boş bir
+        // veri dizisi döndürür. Bu durumu burada ele alarak kullanıcıya yol gösteriyoruz.
         console.error("No data received, check RLS policies.");
         setFetchError("Yazılar yüklenemedi. Lütfen Supabase projenizdeki 'posts' tablosu için genel okuma (SELECT) RLS politikasını kontrol edin.");
       } else {
