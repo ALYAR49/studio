@@ -1,7 +1,7 @@
-/* eslint-disable react-hooks/exhaustive-deps */
+
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -23,8 +23,8 @@ export default function HomePage() {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const isMobile = useIsMobile();
 
-  useEffect(() => {
-    const fetchLatestPosts = async () => {
+  const fetchLatestPosts = useCallback(async () => {
+    try {
       const { data, error } = await supabase
         .from('posts')
         .select('id, title, content, image_url, created_at')
@@ -32,22 +32,28 @@ export default function HomePage() {
         .limit(3);
 
       if (error) {
-         // `error` nesnesi doluysa, bu bir ağ hatası veya başka bir sorun olabilir.
-         console.error("Error fetching latest posts:", error);
-         setFetchError("Yazılar yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.");
-      } else if (!data || data.length === 0) {
-        // RLS (Row-Level Security) politikaları genellikle bir hata fırlatmadan boş bir
-        // veri dizisi döndürür. Bu durumu burada ele alarak kullanıcıya yol gösteriyoruz.
-        console.error("No data received, check RLS policies.");
-        setFetchError("Veritabanı Okuma İzniniz Eksik! Lütfen projenizdeki INSTRUCTIONS.md dosyasını açın ve 'Veritabanı Tablolarını Oluşturun' başlığı altındaki SQL komutlarını Supabase projenizde çalıştırın.");
-      } else {
-        setLatestPosts(data);
+        throw error;
       }
-      setLoading(false);
-    };
 
-    fetchLatestPosts();
+      if (!data) {
+        throw new Error('No data received');
+      }
+
+      setLatestPosts(data);
+      setFetchError(null);
+    } catch (error) {
+      console.error('Error fetching latest posts:', error);
+      setFetchError(
+        "Veritabanı Okuma İzniniz Eksik! Lütfen projenizdeki INSTRUCTIONS.md dosyasını açın ve 'Veritabanı Tablolarını Oluşturun' başlığı altındaki SQL komutlarını Supabase projenizde çalıştırın."
+      );
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchLatestPosts();
+  }, [fetchLatestPosts]);
 
   const formatTurkishDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -60,7 +66,11 @@ export default function HomePage() {
   }
 
   if (fetchError) {
-    return <div className="flex justify-center items-center h-screen text-center text-red-500 max-w-2xl mx-auto p-4">{fetchError}</div>;
+    return (
+      <div className="flex justify-center items-center h-screen text-center text-red-500 max-w-2xl mx-auto p-4">
+        {fetchError}
+      </div>
+    );
   }
 
   return (
@@ -69,7 +79,7 @@ export default function HomePage() {
         <h2 className="text-3xl font-bold text-center mb-6">Son Yazılar</h2>
         {latestPosts.length > 0 ? (
           <div className={`grid gap-6 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}`}>
-            {latestPosts.map((post) => (
+            {latestPosts.map((post, index) => (
               <div key={post.id} className="border rounded-lg overflow-hidden shadow-lg flex flex-col">
                 {post.image_url && (
                   <div className="relative w-full h-48">
@@ -77,7 +87,8 @@ export default function HomePage() {
                       src={post.image_url}
                       alt={post.title}
                       fill
-                      style={{objectFit: 'cover'}}
+                      style={{ objectFit: 'cover' }}
+                      priority={index === 0}
                     />
                   </div>
                 )}
@@ -87,7 +98,7 @@ export default function HomePage() {
                   <div className="text-sm text-gray-500 mb-2 flex items-center">
                     <CalendarDays className="mr-1 w-4 h-4" /> {formatTurkishDate(post.created_at)}
                   </div>
-                  <Link href={`/yazilar/${post.id}`} passHref>
+                  <Link href={`/yazilar/${post.id}`} passHref legacyBehavior>
                     <Button variant="outline" className="w-full">
                       Daha Fazla Oku <ArrowRightCircle className="ml-2 w-4 h-4" />
                     </Button>
@@ -101,15 +112,12 @@ export default function HomePage() {
         )}
         {latestPosts.length > 0 && (
           <div className="text-center mt-8">
-            <Link href="/yazilar" passHref>
+            <Link href="/yazilar" passHref legacyBehavior>
               <Button size="lg">Tüm Yazıları Görüntüle</Button>
             </Link>
           </div>
         )}
       </section>
-
-      {/* Add more sections as needed, e.g., About, Contact Preview */}
-
     </div>
   );
 }
