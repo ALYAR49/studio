@@ -1,6 +1,6 @@
 # Proje Dosyalarını Bilgisayara İndirme ve GitHub'a Yükleme
 
-Bu kılavuz, proje kodlarınızı bilgisayarınıza indirip ardından kendi GitHub hesabınıza nasıl yükleyeceğinizi adım adım anlatmaktadır.
+Bu kılavuz, proje kodlarınızı bilgisayarınıza indirip ardından kendi GitHub hesabınıza nasıl yükleyeceğinizi ve veritabanı ayarlarını nasıl yapacağınızı adım adım anlatmaktadır.
 
 ## 1. Proje Dosyalarını Bilgisayara İndirme
 
@@ -12,7 +12,25 @@ Bu projenin tüm kodlarını ve dosyalarını bilgisayarınıza bir ZIP arşivi 
 
 3.  **Arşivi Çıkarın:** İndirme işlemi tamamlandıktan sonra, bilgisayarınızdaki `.zip` dosyasına sağ tıklayın ve "Tümünü Çıkart" (Extract All) veya benzeri bir seçeneği seçerek dosyaları bir klasöre çıkarın.
 
-## 2. Projeyi GitHub'a Yükleme
+## 2. Veritabanı Okuma İznini Ayarlama (ÖNEMLİ)
+
+Projenin ana sayfasında "Son Eklenen Yazılar" bölümünün çalışması için veritabanınıza genel okuma izni vermeniz gerekmektedir. Bu, tek seferlik bir işlemdir.
+
+1.  **Supabase Projenizi Açın:** [supabase.com](https://supabase.com) adresine gidin ve projenizi seçin.
+2.  **SQL Düzenleyiciyi Bulun:** Sol taraftaki menüde bir **veritabanı silindiri simgesi** göreceksiniz. Bu simgenin üzerine gelin ve açılan menüden **"SQL Editor"** seçeneğine tıklayın.
+3.  **Yeni Sorgu Oluşturun:** Açılan sayfada "+ New query" veya "+ Yeni sorgu" düğmesine tıklayın.
+4.  **Kodu Yapıştırın ve Çalıştırın:** Aşağıdaki kodu açılan sorgu penceresine yapıştırın ve ardından **"RUN"** veya **"ÇALIŞTIR"** düğmesine basın.
+
+```sql
+CREATE POLICY "Allow public read access to posts"
+ON posts
+FOR SELECT
+USING (true);
+```
+
+Bu işlemi yaptıktan sonra ana sayfadaki yazıların doğru bir şekilde göründüğünü göreceksiniz.
+
+## 3. Projeyi GitHub'a Yükleme
 
 Proje dosyalarını bilgisayarınıza indirdikten sonra, aşağıdaki adımları izleyerek kendi GitHub hesabınıza yükleyebilirsiniz. (Bu adımlar için bilgisayarınızda `git`'in yüklü olması gerekmektedir.)
 
