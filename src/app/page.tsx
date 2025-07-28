@@ -39,7 +39,7 @@ export default function HomePage() {
         // RLS (Row-Level Security) politikaları genellikle bir hata fırlatmadan boş bir
         // veri dizisi döndürür. Bu durumu burada ele alarak kullanıcıya yol gösteriyoruz.
         console.error("No data received, check RLS policies.");
-        setFetchError("Yazılar yüklenemedi. Lütfen Supabase projenizdeki 'posts' tablosu için genel okuma (SELECT) RLS politikasını kontrol edin.");
+        setFetchError("Veritabanı Okuma İzniniz Eksik! Lütfen projenizdeki INSTRUCTIONS.md dosyasını açın ve 'Veritabanı Tablolarını Oluşturun' başlığı altındaki SQL komutlarını Supabase projenizde çalıştırın.");
       } else {
         setLatestPosts(data);
       }
@@ -60,7 +60,7 @@ export default function HomePage() {
   }
 
   if (fetchError) {
-    return <div className="flex justify-center items-center h-screen text-red-500">{fetchError}</div>;
+    return <div className="flex justify-center items-center h-screen text-center text-red-500 max-w-2xl mx-auto p-4">{fetchError}</div>;
   }
 
   return (
@@ -76,8 +76,8 @@ export default function HomePage() {
                     <Image
                       src={post.image_url}
                       alt={post.title}
-                      layout="fill"
-                      objectFit="cover"
+                      fill
+                      style={{objectFit: 'cover'}}
                     />
                   </div>
                 )}
