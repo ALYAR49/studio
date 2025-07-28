@@ -1,33 +1,35 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { List, ListItem } from "@/components/ui/list";
-import { ArrowRight, PenSquare } from "lucide-react";
-import Link from "next/link";
-import { supabase } from "@/lib/supabase";
-import { useEffect, useState } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import Image from 'next/image';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { CalendarDays, ArrowRightCircle } from 'lucide-react';
 
-type Post = {
-  id: number;
+interface Post {
+  id: string;
   title: string;
-};
+  content: string;
+  image_url?: string;
+  created_at: string;
+}
 
 export default function HomePage() {
   const [latestPosts, setLatestPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const fetchLatestPosts = async () => {
-      setLoading(true);
-      setFetchError(null);
       const { data, error } = await supabase
         .from('posts')
-        .select('id, title')
+        .select('id, title, content, image_url, created_at')
         .order('created_at', { ascending: false })
-        .limit(4);
+        .limit(3);
 
       if (error) {
          // `error` nesnesi doluysa, bu bir ağ hatası veya başka bir sorun olabilir.
@@ -47,70 +49,67 @@ export default function HomePage() {
     fetchLatestPosts();
   }, []);
 
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <div className="lg:col-span-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-headline text-3xl">Son Eklenen Yazılar</CardTitle>
-            <CardDescription>En yeni düşüncelerim ve keşiflerim.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="space-y-4">
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-              </div>
-            ) : fetchError ? (
-              <div className="text-destructive bg-destructive/10 p-4 rounded-md">
-                <h4 className="font-semibold">Veri Çekme Hatası</h4>
-                <p>{fetchError}</p>
-              </div>
-            ) : (
-              <List>
-                {latestPosts.length > 0 ? (
-                  latestPosts.map((post) => (
-                    <ListItem key={post.id}>
-                      <Link href={`/yazilar/${post.id}`} className="flex items-center justify-between group">
-                        <span className="group-hover:text-primary transition-colors">📌 {post.title}</span>
-                        <ArrowRight className="size-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </Link>
-                    </ListItem>
-                  ))
-                ) : (
-                   <ListItem className="text-center text-muted-foreground">Henüz yayınlanmış bir yazı yok.</ListItem>
-                )}
-              </List>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+  const formatTurkishDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+    return date.toLocaleDateString('tr-TR', options);
+  };
 
-      <div>
-        <Card className="bg-primary text-primary-foreground">
-          <CardHeader>
-            <div className="flex items-center gap-4">
-              <PenSquare className="size-8 text-accent"/>
-              <CardTitle className="font-headline text-2xl">Başlık Oluşturma Aracı</CardTitle>
-            </div>
-            <CardDescription className="text-primary-foreground/80 pt-2">
-              Yapay zeka destekli aracımızla bir sonraki makaleniz için ilgi çekici başlıklar ve SEO anahtar kelimeleri oluşturun.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p>Yaratıcılığınızı serbest bırakın ve içeriğinizin öne çıkmasını sağlayın.</p>
-          </CardContent>
-          <CardFooter>
-            <Button asChild variant="secondary" className="w-full">
-              <Link href="/araclar/baslik-olustur">
-                Aracı Dene <ArrowRight className="ml-2" />
-              </Link>
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
+  if (loading) {
+    return <div className="flex justify-center items-center h-screen">Yükleniyor...</div>;
+  }
+
+  if (fetchError) {
+    return <div className="flex justify-center items-center h-screen text-red-500">{fetchError}</div>;
+  }
+
+  return (
+    <div className="container mx-auto p-4">
+      <section className="mb-8">
+        <h2 className="text-3xl font-bold text-center mb-6">Son Yazılar</h2>
+        {latestPosts.length > 0 ? (
+          <div className={`grid gap-6 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}`}>
+            {latestPosts.map((post) => (
+              <div key={post.id} className="border rounded-lg overflow-hidden shadow-lg flex flex-col">
+                {post.image_url && (
+                  <div className="relative w-full h-48">
+                    <Image
+                      src={post.image_url}
+                      alt={post.title}
+                      layout="fill"
+                      objectFit="cover"
+                    />
+                  </div>
+                )}
+                <div className="p-4 flex flex-col flex-grow">
+                  <h3 className="text-xl font-semibold mb-2">{post.title}</h3>
+                  <p className="text-gray-700 text-sm mb-4 flex-grow line-clamp-3">{post.content}</p>
+                  <div className="text-sm text-gray-500 mb-2 flex items-center">
+                    <CalendarDays className="mr-1 w-4 h-4" /> {formatTurkishDate(post.created_at)}
+                  </div>
+                  <Link href={`/yazilar/${post.id}`} passHref>
+                    <Button variant="outline" className="w-full">
+                      Daha Fazla Oku <ArrowRightCircle className="ml-2 w-4 h-4" />
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-center text-gray-600">Henüz hiç yazı eklenmemiş.</p>
+        )}
+        {latestPosts.length > 0 && (
+          <div className="text-center mt-8">
+            <Link href="/yazilar" passHref>
+              <Button size="lg">Tüm Yazıları Görüntüle</Button>
+            </Link>
+          </div>
+        )}
+      </section>
+
+      {/* Add more sections as needed, e.g., About, Contact Preview */}
+
     </div>
   );
 }
